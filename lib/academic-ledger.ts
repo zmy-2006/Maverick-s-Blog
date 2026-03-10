@@ -143,7 +143,7 @@ export async function getAcademicCourseGroups(): Promise<AcademicCourseGroup[]> 
     (course): course is AcademicCourseSummary => Boolean(course),
   );
 
-  return [
+  const groups: AcademicCourseGroup[] = [
     {
       id: "current",
       title: "CURRENT SESSION",
@@ -154,7 +154,9 @@ export async function getAcademicCourseGroups(): Promise<AcademicCourseGroup[]> 
       title: "ARCHIVED CREDITS",
       courses: courses.filter((course) => course.group === "archived"),
     },
-  ].filter((group) => group.courses.length > 0);
+  ];
+
+  return groups.filter((group) => group.courses.length > 0);
 }
 
 export async function getAllAcademicCourses() {
