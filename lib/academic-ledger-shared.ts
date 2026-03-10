@@ -2,6 +2,7 @@ export type AcademicGroupId = "current" | "archived";
 
 export type AcademicNoteSummary = {
   slug: string;
+  sourceFile: string;
   title: string;
   summary: string;
   updatedAt: string;

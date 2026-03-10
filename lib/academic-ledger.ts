@@ -26,6 +26,15 @@ function labelFromSlug(value: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function toRouteSlug(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\.(md|mdx)$/i, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function summaryFromBody(body: string) {
   return body
     .split("\n")
@@ -88,10 +97,12 @@ async function getNoteSummary(courseId: string, chapterSlug: string, noteFile: s
   const raw = await fs.readFile(notePath, "utf8");
   const stats = await fs.stat(notePath);
   const { data, content } = matter(raw);
+  const filenameWithoutExt = noteFile.replace(/\.(md|mdx)$/i, "");
 
   return {
-    slug: noteFile.replace(/\.(md|mdx)$/i, ""),
-    title: typeof data.title === "string" ? data.title : labelFromSlug(noteFile.replace(/\.(md|mdx)$/i, "")),
+    slug: toRouteSlug(filenameWithoutExt),
+    sourceFile: noteFile,
+    title: typeof data.title === "string" ? data.title : labelFromSlug(filenameWithoutExt),
     summary: typeof data.summary === "string" ? data.summary : summaryFromBody(content),
     updatedAt: coerceDate(typeof data.updatedAt === "string" ? data.updatedAt : undefined, stats.mtime),
   };
@@ -180,28 +191,20 @@ export async function getAcademicNote(courseId: string, chapterSlug: string, not
   const match = await getAcademicChapter(courseId, chapterSlug);
   if (!match) return null;
 
-  const noteFile = `${noteSlug}.md`;
-  const noteFileMdx = `${noteSlug}.mdx`;
   const chapterPath = path.join(ledgerRoot, courseId, chapterSlug);
-  let notePath = path.join(chapterPath, noteFile);
-  try {
-    await fs.access(notePath);
-  } catch {
-    notePath = path.join(chapterPath, noteFileMdx);
-    try {
-      await fs.access(notePath);
-    } catch {
-      return null;
-    }
-  }
+  const noteMeta = match.chapter.notes.find((note) => note.slug === noteSlug);
+  if (!noteMeta) return null;
+
+  const notePath = path.join(chapterPath, noteMeta.sourceFile);
 
   const raw = await fs.readFile(notePath, "utf8");
   const stats = await fs.stat(notePath);
   const { data, content } = matter(raw);
 
   return {
-    slug: noteSlug,
-    title: typeof data.title === "string" ? data.title : labelFromSlug(noteSlug),
+    slug: noteMeta.slug,
+    sourceFile: noteMeta.sourceFile,
+    title: typeof data.title === "string" ? data.title : noteMeta.title,
     summary: typeof data.summary === "string" ? data.summary : summaryFromBody(content),
     updatedAt: coerceDate(typeof data.updatedAt === "string" ? data.updatedAt : undefined, stats.mtime),
     body: rewriteWikiSyntax(content, courseId, chapterSlug),
