@@ -26,6 +26,7 @@ async function getRecentAssets(): Promise<VaultAssetRecord[]> {
       mimeType: row.mimeType,
       sizeBytes: row.sizeBytes,
       partition: row.partition as VaultPartition,
+      directory: row.directory,
       uploadedAt: row.uploadedAt.toISOString(),
     }));
   } catch {

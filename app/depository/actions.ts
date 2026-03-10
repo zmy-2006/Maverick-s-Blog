@@ -17,6 +17,7 @@ function isVaultPartition(value: string): value is VaultPartition {
 
 export async function uploadVaultAsset(formData: FormData): Promise<UploadResult> {
   const partitionRaw = formData.get("partition");
+  const directoryRaw = formData.get("directory");
   const file = formData.get("file");
 
   if (typeof partitionRaw !== "string" || !isVaultPartition(partitionRaw)) {
@@ -26,6 +27,10 @@ export async function uploadVaultAsset(formData: FormData): Promise<UploadResult
   if (!(file instanceof File)) {
     return { ok: false, message: "No file selected." };
   }
+  const directory =
+    typeof directoryRaw === "string" && directoryRaw.trim().length > 0
+      ? directoryRaw.trim().slice(0, 60)
+      : null;
 
   if (file.size === 0) {
     return { ok: false, message: "File is empty." };
@@ -56,6 +61,7 @@ export async function uploadVaultAsset(formData: FormData): Promise<UploadResult
         mimeType: file.type || "application/octet-stream",
         sizeBytes: file.size,
         partition: partitionRaw,
+        directory,
       },
     });
 
@@ -70,6 +76,7 @@ export async function uploadVaultAsset(formData: FormData): Promise<UploadResult
         mimeType: created.mimeType,
         sizeBytes: created.sizeBytes,
         partition: created.partition as VaultPartition,
+        directory: created.directory,
         uploadedAt: created.uploadedAt.toISOString(),
       },
     };

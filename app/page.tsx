@@ -1,9 +1,5 @@
-import { CinematicDashboard } from "@/components/cinematic-dashboard";
+import { HeroIgnition } from "@/components/hero-ignition";
 
 export default function HomePage() {
-  return (
-    <div className="mx-auto w-full max-w-7xl">
-      <CinematicDashboard />
-    </div>
-  );
+  return <HeroIgnition />;
 }

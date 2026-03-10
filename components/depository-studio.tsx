@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import Link from "next/link";
 import { DragEvent, useMemo, useState, useTransition } from "react";
 import { uploadVaultAsset } from "@/app/depository/actions";
 import {
@@ -16,6 +17,7 @@ type LocalPendingAsset = {
   originalName: string;
   sizeBytes: number;
   partition: VaultPartition;
+  directory: string;
 };
 
 const partitions: Array<{ id: VaultPartition; title: string; desc: string }> = [
@@ -36,6 +38,7 @@ export function DepositoryStudio({ initialAssets }: DepositoryStudioProps) {
   const [pendingAssets, setPendingAssets] = useState<LocalPendingAsset[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isUploading, startUpload] = useTransition();
+  const [directoryInput, setDirectoryInput] = useState("general-intake");
 
   const activeInfo = useMemo(
     () => partitions.find((partition) => partition.id === activePartition) ?? partitions[0],
@@ -52,6 +55,7 @@ export function DepositoryStudio({ initialAssets }: DepositoryStudioProps) {
       originalName: file.name,
       sizeBytes: file.size,
       partition: activePartition,
+      directory: directoryInput.trim() || "general-intake",
     }));
     setPendingAssets((prev) => [...staged, ...prev]);
     setErrorMessage(null);
@@ -74,6 +78,7 @@ export function DepositoryStudio({ initialAssets }: DepositoryStudioProps) {
       for (const pending of activePendingAssets) {
         const formData = new FormData();
         formData.set("partition", pending.partition);
+        formData.set("directory", pending.directory);
         formData.set("file", pending.file);
 
         const result = await uploadVaultAsset(formData);
@@ -87,6 +92,19 @@ export function DepositoryStudio({ initialAssets }: DepositoryStudioProps) {
       }
     });
   };
+
+  const buildPreviewLink = (asset: VaultAssetRecord) =>
+    `/depository/preview?url=${encodeURIComponent(asset.blobUrl)}&name=${encodeURIComponent(
+      asset.originalName,
+    )}&type=${encodeURIComponent(asset.mimeType)}`;
+
+  const canPreview = (asset: VaultAssetRecord) =>
+    asset.mimeType.startsWith("text/") ||
+    asset.mimeType.includes("markdown") ||
+    asset.mimeType.startsWith("image/") ||
+    asset.mimeType === "application/pdf" ||
+    asset.originalName.endsWith(".md") ||
+    asset.originalName.endsWith(".mdx");
 
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-8 pb-16">
@@ -134,6 +152,12 @@ export function DepositoryStudio({ initialAssets }: DepositoryStudioProps) {
           支持 PPT、PDF、Markdown、图片等文件。当前分区：{activeInfo.title}
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
+          <input
+            value={directoryInput}
+            onChange={(event) => setDirectoryInput(event.target.value)}
+            placeholder="Directory / Course (e.g. system-design)"
+            className="w-[min(340px,90vw)] rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs tracking-[0.12em] text-neutral-100 outline-none placeholder:text-neutral-400/75"
+          />
           <label className="inline-flex cursor-pointer items-center rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs tracking-[0.14em] text-neutral-200/85">
             选择文件
             <input
@@ -169,8 +193,13 @@ export function DepositoryStudio({ initialAssets }: DepositoryStudioProps) {
                 className="glass-panel rounded-2xl px-5 py-4"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm tracking-[0.06em] text-neutral-200/90">{asset.originalName}</p>
-                  <p className="text-xs tracking-[0.16em] text-neutral-300/75">{formatSize(asset.sizeBytes)} · pending</p>
+                  <div>
+                    <p className="text-sm tracking-[0.06em] text-neutral-200/90">{asset.originalName}</p>
+                    <p className="pt-1 text-[11px] tracking-[0.12em] text-neutral-400/80">{asset.directory}</p>
+                  </div>
+                  <p className="text-xs tracking-[0.16em] text-neutral-300/75">
+                    {formatSize(asset.sizeBytes)} · pending
+                  </p>
                 </div>
               </motion.div>
             ))
@@ -195,19 +224,26 @@ export function DepositoryStudio({ initialAssets }: DepositoryStudioProps) {
                   <div className="min-w-0">
                     <p className="truncate text-sm tracking-[0.06em] text-neutral-200/90">{asset.originalName}</p>
                     <p className="pt-1 text-[11px] tracking-[0.12em] text-neutral-300/65">
-                      {new Date(asset.uploadedAt).toLocaleString("zh-CN")}
+                      {(asset.directory || "general-intake") + " · " + new Date(asset.uploadedAt).toLocaleString("zh-CN")}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs tracking-[0.16em] text-[#d4af37]/85">{formatSize(asset.sizeBytes)}</p>
-                    <a
-                      href={asset.blobUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="pt-1 text-[11px] tracking-[0.12em] text-neutral-300/75 hover:text-neutral-100"
-                    >
-                      Open
-                    </a>
+                    <div className="pt-1 flex items-center justify-end gap-3">
+                      {canPreview(asset) ? (
+                        <Link href={buildPreviewLink(asset)} className="text-[11px] tracking-[0.12em] text-neutral-200/90 hover:text-white">
+                          Preview
+                        </Link>
+                      ) : null}
+                      <a
+                        href={asset.blobUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] tracking-[0.12em] text-neutral-300/75 hover:text-neutral-100"
+                      >
+                        Open
+                      </a>
+                    </div>
                   </div>
                 </div>
               </motion.div>

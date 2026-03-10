@@ -16,6 +16,7 @@ export type VaultAssetRecord = {
   mimeType: string;
   sizeBytes: number;
   partition: VaultPartition;
+  directory?: string | null;
   uploadedAt: string;
 };
 

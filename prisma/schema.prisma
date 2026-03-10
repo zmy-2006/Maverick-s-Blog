@@ -29,5 +29,6 @@ model VaultAsset {
   mimeType    String
   sizeBytes   Int
   partition   VaultPartition
+  directory   String?
   uploadedAt  DateTime       @default(now())
 }

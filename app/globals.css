@@ -7,6 +7,8 @@
   --bg-midnight: #0a1221;
   --bg-charcoal: #161616;
   --accent-champagne: #d4af37;
+  --theme-accent: #d4af37;
+  --hero-image: url("/images/v12-hero.jpg");
   --accent-platinum: #c8c8c8;
   --text-soft: rgba(238, 238, 238, 0.9);
   --text-muted: rgba(206, 206, 206, 0.72);
@@ -27,6 +29,11 @@ body {
   color: var(--text-soft);
   background-color: var(--bg-obsidian);
   font-family: var(--font-inter), sans-serif;
+}
+
+.theme-bg {
+  background-image: var(--hero-image);
+  transition: background-image 0.9s ease;
 }
 
 a {
@@ -66,4 +73,38 @@ a {
   inset: 0;
   pointer-events: none;
   background: radial-gradient(circle at 50% 50%, transparent 35%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+.dynamic-grain {
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+  background-size: 3px 3px;
+  animation: grainShift 10s steps(10) infinite;
+}
+
+@keyframes grainShift {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-2%, 1%);
+  }
+  50% {
+    transform: translate(1%, -2%);
+  }
+  75% {
+    transform: translate(-1%, 2%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }

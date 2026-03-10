@@ -1,60 +1,89 @@
-# Maverick's Blog - Local Setup
+# Maverick's Blog - 本地配置说明
 
-## 1) Environment Variables
+部署上线与 GitHub 自动更新流程请看：
 
-Create a local env file:
+- `DEPLOY.md`
+- `NOTE_REPO_TEMPLATE/`
+
+## 0) 先确认
+
+- GitHub 仓库用于托管代码，不能直接作为数据库。
+- 你已经成功推送到仓库：`main` 分支可用。
+
+## 1) 配置环境变量
+
+创建本地配置文件：
 
 ```bash
 cp .env.example .env.local
 ```
 
-Edit `.env.local`:
+编辑 `.env.local`（必须替换成真实值）：
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DB_NAME?schema=public"
 BLOB_READ_WRITE_TOKEN="vercel_blob_rw_xxx"
 ```
 
-## 2) Install Dependencies
+说明：
+- `DATABASE_URL` 建议使用 Neon/Supabase/Vercel Postgres 的连接串
+- `BLOB_READ_WRITE_TOKEN` 来自 Vercel Blob 控制台
+
+## 2) 安装依赖
 
 ```bash
 npm install --legacy-peer-deps
 ```
 
-## 3) Prisma Setup
+## 3) 检查数据库配置是否合法
 
-Generate Prisma client:
+```bash
+npm run setup:check
+```
+
+## 4) Prisma 初始化数据库
+
+生成 Prisma Client：
 
 ```bash
 npm run prisma:generate
 ```
 
-Push schema to your database:
+把 schema 推到数据库：
 
 ```bash
 npm run prisma:push
 ```
 
-## 4) Run the Project
+## 5) 启动项目
 
 ```bash
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+打开 `http://localhost:3000`。
 
-## 5) Upload Flow (Phase 3)
+## 6) 上传流程验证（Phase 3）
 
-On `/depository`:
+访问 `/depository`：
 
-- Select a partition (`life`, `notes`, `research`, `tech`)
-- Drag files into the intake area (or use "选择文件")
-- Click `Commit To Vault`
-- File is uploaded to Vercel Blob and metadata is saved to PostgreSQL (`VaultAsset`)
+- 选择分区（`life` / `notes` / `research` / `tech`）
+- 拖拽文件或点击“选择文件”
+- 点击 `Commit To Vault`
+- 成功后会：
+  - 上传文件到 Vercel Blob
+  - 写入 PostgreSQL `VaultAsset` 表
+  - 页面显示已归档资产
 
-## 6) Common Issues
+## 7) 常见报错
 
-- **Missing `DATABASE_URL`**: add it to `.env.local`
-- **Missing `BLOB_READ_WRITE_TOKEN`**: add your Vercel Blob read-write token
-- **`prisma:push` fails**: verify your Postgres host/user/password and network access
-- **Upload fails**: check Blob token scope and DB connectivity
+- **Environment variable not found: DATABASE_URL**
+  - 先确认 `.env.local` 存在且已填写真实值
+  - 已配置脚本自动读取 `.env.local`
+
+- **Upload failed. Please check Blob/Database configuration**
+  - 检查 `BLOB_READ_WRITE_TOKEN` 是否有效
+  - 检查 `DATABASE_URL` 是否可连通
+
+- **prisma:push 连接失败**
+  - 通常是数据库白名单、账号密码或 URL 填写错误
